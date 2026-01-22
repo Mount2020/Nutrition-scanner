@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>營養小精靈</title>
+    <title>營養小精靈 - 蜜桃可愛版 v8.4 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Varela+Round&display=swap" rel="stylesheet">
     <script>
@@ -92,16 +92,21 @@
         
         <header class="bg-gradient-to-r from-cute-orange to-cute-pink p-6 text-white text-center shadow-lg shrink-0 z-20 rounded-b-[2rem]">
             <h1 class="text-3xl font-bold tracking-wider flex justify-center items-center gap-2 drop-shadow-md">
-                🍑 營養小精靈 v8.1
+                🍑 營養小精靈 v8.4
             </h1>
-            <p class="text-xs text-white/80 mt-2">拍照成分表 AI 分析</p>
+            <p class="text-xs text-white/80 mt-2">成分翻譯強化版</p>
         </header>
 
         <main class="flex-1 p-6 space-y-6 overflow-y-auto no-scrollbar relative">
             
-            <div class="bg-white p-4 rounded-3xl border-2 border-orange-100 shadow-sm">
+            <div class="bg-white p-4 rounded-3xl border-2 border-orange-100 shadow-sm space-y-3">
                 <input type="password" id="apiKeyInput" placeholder="✨ 請先餵食 API Key 才能運作喔" 
                     class="w-full p-3 bg-orange-50/50 border-none rounded-2xl text-sm text-center placeholder-orange-300 text-orange-600 focus:ring-4 focus:ring-orange-100 outline-none">
+                
+                <!-- 新增：測試按鈕 -->
+                <button onclick="runDemo()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl text-xs font-bold transition flex justify-center items-center gap-2">
+                    <span>🧪</span> 沒 Key？點我試用範例資料
+                </button>
             </div>
 
             <div class="space-y-4">
@@ -127,7 +132,7 @@
             <div id="loadingOverlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-8 text-center rounded-[2.5rem]">
                 <div class="loader-ripple"><div></div><div></div></div>
                 <h3 class="text-xl font-bold text-cute-pink mt-6 mb-2">正在用力看圖片...</h3>
-                <p id="loadingTip" class="text-orange-400 text-sm animate-pulse font-bold bg-orange-50 px-4 py-2 rounded-full">AI 小精靈正在分析成分表...</p>
+                <p id="loadingTip" class="text-orange-400 text-sm animate-pulse font-bold bg-orange-50 px-4 py-2 rounded-full">AI 小精靈正在地毯式搜索化學添加物...</p>
                 <button onclick="stopAnalyze()" class="mt-8 text-xs text-slate-400 underline decoration-slate-300">取消分析</button>
             </div>
 
@@ -183,6 +188,7 @@
                 <div class="fade-in-up bg-white rounded-[2.5rem] p-6 shadow-lg border-2 border-orange-50" style="animation-delay: 0.4s;">
                     <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
                         <span class="text-2xl">🔬</span> 成分解密
+                        <span class="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-1 rounded-full ml-2">成分全開</span>
                     </h3>
                     <div id="resTranslations" class="space-y-4"></div>
                 </div>
@@ -221,6 +227,48 @@
         let base64Image = null;
         let photoFileType = null;
         let isLoading = false;
+
+        // 模擬資料 (Mock Data)
+        const mockData = {
+            "productName": "示範商品：快樂肥宅水 (可樂)",
+            "score": 35,
+            "scoreBreakdown": {
+                "redItems": [
+                    {"name": "糖分", "value": "10.6g", "score": -30},
+                    {"name": "添加劑", "value": "9種", "score": -30}
+                ],
+                "yellowItems": [],
+                "greenItems": [
+                    {"name": "無反式脂肪", "value": "0g", "score": 10},
+                    {"name": "低飽和脂肪", "value": "0g", "score": 10}
+                ]
+            },
+            "verdict": {
+                "title": "雖然喝了會快樂，但胰臟會哭泣",
+                "color": "red"
+            },
+            "highlights": [
+                { "type": "bad", "label": "高糖警報", "value": "10.6g", "desc": "等於直接吃方糖！" },
+                { "type": "bad", "label": "磷酸", "value": "含", "desc": "影響鈣質吸收" },
+                { "type": "good", "label": "快樂", "value": "100%", "desc": "心靈祥和" }
+            ],
+            "translations": [
+                { "origin": "焦糖色素", "simplified": "黑色顏料", "explain": "純粹為了讓它看起來像可樂，沒營養。" },
+                { "origin": "高果糖糖漿", "simplified": "致肥糖水", "explain": "容易轉化為脂肪堆積在肝臟。" },
+                { "origin": "磷酸", "simplified": "酸味劑", "explain": "讓飲料喝起來有酸爽感，但會影響鈣吸收。" },
+                { "origin": "咖啡因", "simplified": "提神劑", "explain": "讓你不想睡覺，喝多會心悸。" }
+            ],
+            "advice": "心情不好的時候喝一小口就好，平常還是喝水吧！建議一週不超過一瓶，喝完記得漱口以免蛀牙喔。"
+        };
+
+        // 執行範例模式
+        function runDemo() {
+            startLoading("正在載入範例資料...");
+            setTimeout(() => {
+                stopLoading();
+                renderResult(mockData);
+            }, 1500);
+        }
 
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -262,7 +310,7 @@
                 return;
             }
 
-            startLoading("正在分析圖片...");
+            startLoading("AI 小精靈正在地毯式搜索化學添加物...");
 
             try {
                 const promptText = `你是一位專業的食品營養分析師，風格可愛友善。請根據以下台灣衛福部標準分析圖片中的營養標示。
@@ -298,7 +346,13 @@
 - 40-69 分 → yellow（⚠️ 注意份量）
 - < 40 分 → red（🛑 少吃一點）
 
-請分析這張圖片，回傳純 JSON（不要任何其他文字）：
+請分析這張圖片，回傳純 JSON（不要任何其他文字）。
+
+**【成分翻譯特別指令】**
+在「translations」欄位中，請務必將圖片中看到的「每一個」化學添加物（例如：抗氧化劑、安定劑、色素、防腐劑、甜味劑、乳化劑、黏稠劑等）**單獨列出並解釋**。
+1. **禁止合併**：絕對不要把多個添加物合併成一項（例如不要只寫「食用色素」，如果成分表有寫「紅色六號」和「藍色一號」，請分開列出兩項）。
+2. **禁止遺漏**：如果成分表上有 15 個化學名詞，請在 translations 中回傳 15 筆資料。
+3. **白話解釋**：請用消費者聽得懂的語言解釋它的用途（例如：「讓食物變黏稠」、「讓顏色更好看」、「防止食物壞掉」）。
 
 {
   "productName": "食品名稱",
@@ -322,9 +376,9 @@
   ],
   "translations": [
     {
-      "origin": "原文",
-      "simplified": "通俗說法",
-      "explain": "為什麼值得注意"
+      "origin": "原文成分名(如:紅色四十號)",
+      "simplified": "通俗說法(如:人工色素)",
+      "explain": "這東西是做什麼的？(如:只是為了染色，沒有營養價值)"
     }
   ],
   "advice": "健康建議"
