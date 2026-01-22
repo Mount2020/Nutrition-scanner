@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>營養小精靈 - 蜜桃可愛版</title>
+    <title>營養小精靈</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Varela+Round&display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@
     <style>
         body { font-family: 'Varela Round', 'Noto Sans TC', sans-serif; }
         
-        /* 可愛波紋動畫 (改為粉橘色) */
+        /* 可愛波紋動畫 */
         .loader-ripple { display: inline-block; position: relative; width: 80px; height: 80px; }
         .loader-ripple div { position: absolute; border: 4px solid #FF8E8E; opacity: 1; border-radius: 50%; animation: loader-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
         .loader-ripple div:nth-child(2) { animation-delay: -0.5s; }
@@ -37,11 +37,8 @@
             100% { top: 0px; left: 0px; width: 72px; height: 72px; opacity: 0; }
         }
         
-        /* 掃描框圓角化 */
         #reader { border: none !important; }
         #reader video { border-radius: 1.5rem; object-fit: cover; }
-        
-        /* 隱藏捲軸但保留功能 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -50,12 +47,11 @@
 
     <div class="w-full md:max-w-xl bg-white/80 backdrop-blur-xl md:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(255,142,142,0.3)] min-h-screen md:min-h-0 md:h-[90vh] border-4 border-white overflow-hidden relative flex flex-col">
         
-        <!-- Header: 漸層粉橘色 -->
+        <!-- Header -->
         <header class="bg-gradient-to-r from-cute-orange to-cute-pink p-5 text-white text-center shadow-lg shrink-0 z-20 rounded-b-[2rem]">
             <h1 class="text-2xl font-bold tracking-wider flex justify-center items-center gap-2 drop-shadow-md">
-                🍑 營養小精靈
+                🍑 營養小精靈 v7.2
             </h1>
-            <!-- 切換按鈕: 像膠囊一樣圓潤 -->
             <div class="mt-4 flex p-1.5 bg-white/20 rounded-full backdrop-blur-md mx-4">
                 <button onclick="switchMode('barcode')" id="tabBarcode" class="flex-1 py-2 text-xs font-bold rounded-full bg-white text-cute-pink shadow-md transition-all transform scale-105">
                     📷 掃條碼
@@ -68,7 +64,7 @@
 
         <main class="flex-1 p-5 space-y-5 overflow-y-auto no-scrollbar relative">
             
-            <!-- API Key 輸入區: 像雲朵一樣軟綿綿 -->
+            <!-- API Key -->
             <div class="bg-white p-4 rounded-3xl border-2 border-orange-100 shadow-sm">
                 <input type="password" id="apiKeyInput" placeholder="✨ 請先餵食 API Key 才能運作喔" 
                     class="w-full p-3 bg-orange-50/50 border-none rounded-2xl text-sm text-center placeholder-orange-300 text-orange-600 focus:ring-4 focus:ring-orange-100 outline-none transition-all">
@@ -87,7 +83,6 @@
                     </div>
                 </div>
                 
-                <!-- 測試按鈕 -->
                 <div class="flex gap-2 justify-center mt-2">
                     <button onclick="mockBarcodeScan('5449000000996')" class="text-xs bg-white text-orange-400 font-bold px-4 py-2 rounded-full hover:bg-orange-50 border border-orange-100 shadow-sm transition-all">
                         🧪 沒鏡頭？點我餵食可樂
@@ -118,12 +113,14 @@
                 <div class="loader-ripple"><div></div><div></div></div>
                 <h3 class="text-xl font-bold text-cute-pink mt-6 mb-2">正在讀取美味數據...</h3>
                 <p id="loadingTip" class="text-orange-400 text-sm animate-pulse font-bold bg-orange-50 px-4 py-2 rounded-full">...</p>
+                <!-- 加入取消按鈕，防止卡死 -->
+                <button onclick="forceStopLoading()" class="mt-8 text-xs text-slate-400 underline decoration-slate-300">
+                    等太久了嗎？點我取消
+                </button>
             </div>
 
             <!-- 結果顯示區 -->
             <div id="resultArea" class="hidden space-y-5 pb-20 animate-fade-in-up">
-                
-                <!-- 總評卡片 -->
                 <div id="verdictCard" class="bg-white p-6 rounded-[2rem] shadow-md border-b-8 relative overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
                     <div class="flex justify-between items-start mb-3">
                         <h2 id="resProductName" class="text-xl font-bold text-slate-700 pr-2"></h2>
@@ -134,13 +131,11 @@
                     </div>
                 </div>
 
-                <!-- 重點掃描 -->
                 <div>
                     <h3 class="text-xs font-bold text-orange-300 uppercase tracking-wider mb-3 ml-2">✨ 重點掃描 Highlights</h3>
                     <div id="resHighlights" class="grid grid-cols-1 gap-3"></div>
                 </div>
 
-                <!-- 翻譯機 -->
                 <div class="bg-white rounded-[2rem] p-6 border-2 border-orange-50 shadow-sm">
                     <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2 mb-4">
                         <span class="bg-orange-100 text-orange-500 p-1.5 rounded-lg">🔍</span>
@@ -149,7 +144,6 @@
                     <div id="resTranslations" class="space-y-4 divide-y divide-orange-50"></div>
                 </div>
 
-                <!-- 建議卡片 -->
                 <div class="bg-gradient-to-br from-cute-orange to-cute-pink rounded-[2rem] p-6 text-white shadow-lg shadow-orange-200 relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-8xl opacity-20 rotate-12">📝</div>
                     <h3 class="font-bold text-white/90 text-sm mb-4 border-b border-white/30 pb-2">小萌獸的悄悄話</h3>
@@ -173,8 +167,7 @@
     </div>
 
     <script>
-        // --- 核心設定 ---
-        const MODEL_NAME = "gemini-2.5-flash-lite"; 
+        const MODEL_NAME = "gemini-2.5-flash-lite"; // 使用你確認過可行的模型
 
         const apiKeyInput = document.getElementById('apiKeyInput');
         const resultArea = document.getElementById('resultArea');
@@ -190,8 +183,7 @@
         
         const tips = ["正在翻找食品大百科...", "正在解讀魔法咒語(成分表)...", "正在計算吃下去會不會變胖..."];
 
-        // --- 功能邏輯 ---
-
+        // UI 切換
         function switchMode(mode) {
             currentMode = mode;
             msgArea.classList.add('hidden');
@@ -223,7 +215,6 @@
                 (error) => {} 
             ).catch(err => {
                 showError("相機害羞打不開 (請確認 HTTPS)");
-                console.error(err);
             });
         }
 
@@ -236,11 +227,25 @@
             }
         }
 
+        // --- 核心改進：加上 Timeout 與 AbortController ---
         async function handleBarcode(barcode) {
             startLoading("小精靈飛去查資料庫了...");
+            
+            // 1. 設定 8 秒超時控制器
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒後放棄
+
             try {
-                const offRes = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
-                if (!offRes.ok) throw new Error("網路連線失敗");
+                // 2. 發送請求，並綁定 signal
+                const offRes = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, {
+                    signal: controller.signal
+                });
+                
+                // 成功回應後，清除計時器
+                clearTimeout(timeoutId);
+
+                if (!offRes.ok) throw new Error("資料庫連線失敗");
+                
                 const offData = await offRes.json();
                 
                 if (offData.status === 1) {
@@ -252,13 +257,21 @@
                 } else {
                     throw new Error("找不到這個條碼 > <");
                 }
+
             } catch (error) {
                 console.error(error);
+                clearTimeout(timeoutId); // 確保清除計時器
+                
                 let msg = error.message;
-                if (window.location.protocol === 'file:' && msg.includes('fetch')) {
-                    msg = "瀏覽器不讓我在本機連線，請用 Live Server 開啟喔！";
+                
+                // 3. 專門處理超時錯誤
+                if (error.name === 'AbortError') {
+                    msg = "資料庫回應太慢了 (連線逾時)";
+                } else if (msg.includes('Failed to fetch')) {
+                    msg = "網路連線失敗，可能是被擋住了";
                 }
-                showError(`失敗惹：${msg}`, true);
+
+                showError(`掃描失敗：${msg}`, true);
             }
         }
 
@@ -339,7 +352,6 @@
             const badge = document.getElementById('resHealthBadge');
             const color = data.verdict.color;
 
-            // 處理燈號 (這裡的顏色邏輯保留，但樣式變可愛)
             card.className = "bg-white p-6 rounded-[2rem] shadow-md border-b-8 relative overflow-hidden transform hover:scale-[1.02] transition-transform duration-300";
             
             if (color === 'red') {
@@ -356,7 +368,6 @@
                 badge.textContent = "✅ 健康寶寶";
             }
 
-            // Highlights
             const hlContainer = document.getElementById('resHighlights');
             hlContainer.innerHTML = '';
             (data.highlights || []).forEach(item => {
@@ -374,7 +385,6 @@
                     </div>`;
             });
 
-            // Translations
             const transContainer = document.getElementById('resTranslations');
             transContainer.innerHTML = '';
             if(data.translations && data.translations.length) {
@@ -416,6 +426,7 @@
             resultArea.classList.add('hidden');
         }
         function stopLoading() { loadingOverlay.classList.add('hidden'); }
+        function forceStopLoading() { stopLoading(); resetApp(); }
     </script>
 </body>
 </html>
