@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>營養小精靈 - 蜜桃可愛版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Varela+Round&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cute-pink': '#FF8E8E',
+                        'cute-orange': '#FFB067',
+                        'cute-bg': '#FFF5EB',
+                    },
+                    fontFamily: {
+                        'rounded': ['"Varela Round"', '"Noto Sans TC"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Varela Round', 'Noto Sans TC', sans-serif; }
+        
+        /* 可愛波紋動畫 (改為粉橘色) */
+        .loader-ripple { display: inline-block; position: relative; width: 80px; height: 80px; }
+        .loader-ripple div { position: absolute; border: 4px solid #FF8E8E; opacity: 1; border-radius: 50%; animation: loader-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
+        .loader-ripple div:nth-child(2) { animation-delay: -0.5s; }
+        @keyframes loader-ripple {
+            0% { top: 36px; left: 36px; width: 0; height: 0; opacity: 0; }
+            4.9% { top: 36px; left: 36px; width: 0; height: 0; opacity: 0; }
+            5% { top: 36px; left: 36px; width: 0; height: 0; opacity: 1; }
+            100% { top: 0px; left: 0px; width: 72px; height: 72px; opacity: 0; }
+        }
+        
+        /* 掃描框圓角化 */
+        #reader { border: none !important; }
+        #reader video { border-radius: 1.5rem; object-fit: cover; }
+        
+        /* 隱藏捲軸但保留功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-orange-50 to-pink-50 min-h-screen flex flex-col items-center justify-center p-0 md:p-6 text-slate-700">
+
+    <div class="w-full md:max-w-xl bg-white/80 backdrop-blur-xl md:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(255,142,142,0.3)] min-h-screen md:min-h-0 md:h-[90vh] border-4 border-white overflow-hidden relative flex flex-col">
+        
+        <!-- Header: 漸層粉橘色 -->
+        <header class="bg-gradient-to-r from-cute-orange to-cute-pink p-5 text-white text-center shadow-lg shrink-0 z-20 rounded-b-[2rem]">
+            <h1 class="text-2xl font-bold tracking-wider flex justify-center items-center gap-2 drop-shadow-md">
+                🍑 營養小精靈
+            </h1>
+            <!-- 切換按鈕: 像膠囊一樣圓潤 -->
+            <div class="mt-4 flex p-1.5 bg-white/20 rounded-full backdrop-blur-md mx-4">
+                <button onclick="switchMode('barcode')" id="tabBarcode" class="flex-1 py-2 text-xs font-bold rounded-full bg-white text-cute-pink shadow-md transition-all transform scale-105">
+                    📷 掃條碼
+                </button>
+                <button onclick="switchMode('photo')" id="tabPhoto" class="flex-1 py-2 text-xs font-bold rounded-full text-white hover:bg-white/10 transition-all">
+                    🖼️ 拍照片
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 p-5 space-y-5 overflow-y-auto no-scrollbar relative">
+            
+            <!-- API Key 輸入區: 像雲朵一樣軟綿綿 -->
+            <div class="bg-white p-4 rounded-3xl border-2 border-orange-100 shadow-sm">
+                <input type="password" id="apiKeyInput" placeholder="✨ 請先餵食 API Key 才能運作喔" 
+                    class="w-full p-3 bg-orange-50/50 border-none rounded-2xl text-sm text-center placeholder-orange-300 text-orange-600 focus:ring-4 focus:ring-orange-100 outline-none transition-all">
+            </div>
+
+            <!-- 模式 A: 條碼掃描區 -->
+            <div id="barcodeSection" class="space-y-4">
+                <div class="bg-orange-50 rounded-[2rem] overflow-hidden relative min-h-[320px] flex items-center justify-center border-4 border-dashed border-orange-200 group">
+                    <div id="reader" class="w-full h-full"></div>
+                    <div id="scannerPlaceholder" class="text-center p-6 transition-transform group-hover:scale-105 duration-300">
+                        <div class="text-6xl mb-4 animate-bounce">🍮</div>
+                        <p class="text-sm text-orange-400 font-bold mb-6">來，給小精靈看看條碼！</p>
+                        <button onclick="startScanner()" class="bg-gradient-to-r from-cute-orange to-cute-pink text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-orange-200 hover:shadow-xl hover:-translate-y-1 transition-all">
+                            啟動大眼睛 👁️
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 測試按鈕 -->
+                <div class="flex gap-2 justify-center mt-2">
+                    <button onclick="mockBarcodeScan('5449000000996')" class="text-xs bg-white text-orange-400 font-bold px-4 py-2 rounded-full hover:bg-orange-50 border border-orange-100 shadow-sm transition-all">
+                        🧪 沒鏡頭？點我餵食可樂
+                    </button>
+                </div>
+            </div>
+
+            <!-- 模式 B: 圖片上傳區 -->
+            <div id="photoSection" class="hidden space-y-4">
+                <div class="border-4 border-dashed border-pink-200 bg-pink-50/30 rounded-[2rem] p-10 text-center relative group hover:bg-pink-50 transition-all cursor-pointer">
+                    <input type="file" id="imageInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                    <div class="transform group-hover:scale-110 transition-transform duration-300">
+                        <div class="text-6xl mb-3">📸</div>
+                        <h3 class="font-bold text-cute-pink text-lg">拍張照給我也行！</h3>
+                        <p class="text-xs text-pink-300 mt-2 font-bold">支援背面成分表</p>
+                    </div>
+                </div>
+                <div id="previewContainer" class="hidden relative rounded-3xl overflow-hidden shadow-lg ring-4 ring-pink-100">
+                    <img id="imagePreview" class="w-full h-48 object-cover" src="" alt="">
+                </div>
+                <button id="analyzePhotoBtn" class="w-full bg-gradient-to-r from-cute-pink to-rose-400 text-white font-bold py-4 rounded-3xl shadow-lg shadow-pink-200 disabled:opacity-50 hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                    ✨ 開始施展魔法
+                </button>
+            </div>
+
+            <!-- 載入動畫 -->
+            <div id="loadingOverlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-8 text-center rounded-[2.5rem]">
+                <div class="loader-ripple"><div></div><div></div></div>
+                <h3 class="text-xl font-bold text-cute-pink mt-6 mb-2">正在讀取美味數據...</h3>
+                <p id="loadingTip" class="text-orange-400 text-sm animate-pulse font-bold bg-orange-50 px-4 py-2 rounded-full">...</p>
+            </div>
+
+            <!-- 結果顯示區 -->
+            <div id="resultArea" class="hidden space-y-5 pb-20 animate-fade-in-up">
+                
+                <!-- 總評卡片 -->
+                <div id="verdictCard" class="bg-white p-6 rounded-[2rem] shadow-md border-b-8 relative overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+                    <div class="flex justify-between items-start mb-3">
+                        <h2 id="resProductName" class="text-xl font-bold text-slate-700 pr-2"></h2>
+                        <span id="resHealthBadge" class="shrink-0 px-4 py-1.5 text-xs font-bold rounded-full text-white shadow-sm"></span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                        <p id="resTitle" class="text-slate-600 text-base font-medium leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <!-- 重點掃描 -->
+                <div>
+                    <h3 class="text-xs font-bold text-orange-300 uppercase tracking-wider mb-3 ml-2">✨ 重點掃描 Highlights</h3>
+                    <div id="resHighlights" class="grid grid-cols-1 gap-3"></div>
+                </div>
+
+                <!-- 翻譯機 -->
+                <div class="bg-white rounded-[2rem] p-6 border-2 border-orange-50 shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2 mb-4">
+                        <span class="bg-orange-100 text-orange-500 p-1.5 rounded-lg">🔍</span>
+                        白話翻譯機
+                    </h3>
+                    <div id="resTranslations" class="space-y-4 divide-y divide-orange-50"></div>
+                </div>
+
+                <!-- 建議卡片 -->
+                <div class="bg-gradient-to-br from-cute-orange to-cute-pink rounded-[2rem] p-6 text-white shadow-lg shadow-orange-200 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-8xl opacity-20 rotate-12">📝</div>
+                    <h3 class="font-bold text-white/90 text-sm mb-4 border-b border-white/30 pb-2">小萌獸的悄悄話</h3>
+                    <p id="resAdvice" class="leading-relaxed text-sm font-medium relative z-10"></p>
+                </div>
+
+                <button onclick="resetApp()" class="w-full py-4 text-slate-400 text-sm font-bold hover:text-cute-pink transition flex items-center justify-center gap-2">
+                    <span class="text-xl">↺</span> 再抓下一隻 (重掃)
+                </button>
+            </div>
+
+            <!-- 錯誤訊息 -->
+            <div id="msgArea" class="hidden bg-red-50 p-6 rounded-[2rem] border-2 border-red-100 text-red-500 text-sm text-center shadow-sm">
+                <div class="text-4xl mb-2">🥺</div>
+                <p id="msgText" class="font-bold"></p>
+                <button id="switchToPhotoBtn" class="hidden mt-4 bg-white border border-red-200 text-red-500 px-6 py-2 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 hover:shadow-md transition-all">
+                    👉 沒關係，改用拍照的！
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- 核心設定 ---
+        const MODEL_NAME = "gemini-2.5-flash-lite"; 
+
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const resultArea = document.getElementById('resultArea');
+        const msgArea = document.getElementById('msgArea');
+        const msgText = document.getElementById('msgText');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const switchToPhotoBtn = document.getElementById('switchToPhotoBtn');
+        
+        let html5QrcodeScanner = null;
+        let currentMode = 'barcode';
+        let base64Image = null;
+        let photoFileType = null;
+        
+        const tips = ["正在翻找食品大百科...", "正在解讀魔法咒語(成分表)...", "正在計算吃下去會不會變胖..."];
+
+        // --- 功能邏輯 ---
+
+        function switchMode(mode) {
+            currentMode = mode;
+            msgArea.classList.add('hidden');
+            resultArea.classList.add('hidden');
+            
+            const btnBarcode = document.getElementById('tabBarcode');
+            const btnPhoto = document.getElementById('tabPhoto');
+            
+            if (mode === 'barcode') {
+                btnBarcode.className = "flex-1 py-2 text-xs font-bold rounded-full bg-white text-cute-pink shadow-md transition-all transform scale-105";
+                btnPhoto.className = "flex-1 py-2 text-xs font-bold rounded-full text-white hover:bg-white/10 transition-all";
+                document.getElementById('barcodeSection').classList.remove('hidden');
+                document.getElementById('photoSection').classList.add('hidden');
+            } else {
+                btnPhoto.className = "flex-1 py-2 text-xs font-bold rounded-full bg-white text-cute-pink shadow-md transition-all transform scale-105";
+                btnBarcode.className = "flex-1 py-2 text-xs font-bold rounded-full text-white hover:bg-white/10 transition-all";
+                document.getElementById('photoSection').classList.remove('hidden');
+                document.getElementById('barcodeSection').classList.add('hidden');
+                stopScanner();
+            }
+        }
+
+        function startScanner() {
+            if (typeof Html5Qrcode === 'undefined') { showError("無法載入掃描模組"); return; }
+            document.getElementById('scannerPlaceholder').classList.add('hidden');
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, 
+                (decodedText) => { stopScanner(); handleBarcode(decodedText); },
+                (error) => {} 
+            ).catch(err => {
+                showError("相機害羞打不開 (請確認 HTTPS)");
+                console.error(err);
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    document.getElementById('scannerPlaceholder').classList.remove('hidden');
+                }).catch(err => console.log(err));
+            }
+        }
+
+        async function handleBarcode(barcode) {
+            startLoading("小精靈飛去查資料庫了...");
+            try {
+                const offRes = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+                if (!offRes.ok) throw new Error("網路連線失敗");
+                const offData = await offRes.json();
+                
+                if (offData.status === 1) {
+                    const p = offData.product;
+                    const name = p.product_name || "神秘商品";
+                    const ingredients = p.ingredients_text_zh || p.ingredients_text_en || p.ingredients_text;
+                    if (!ingredients) throw new Error("資料庫裡沒有詳細成分 QQ");
+                    await analyzeWithAI(name, ingredients, 'text');
+                } else {
+                    throw new Error("找不到這個條碼 > <");
+                }
+            } catch (error) {
+                console.error(error);
+                let msg = error.message;
+                if (window.location.protocol === 'file:' && msg.includes('fetch')) {
+                    msg = "瀏覽器不讓我在本機連線，請用 Live Server 開啟喔！";
+                }
+                showError(`失敗惹：${msg}`, true);
+            }
+        }
+
+        function mockBarcodeScan(code) { handleBarcode(code); }
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            photoFileType = file.type;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                base64Image = e.target.result.split(',')[1];
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('previewContainer').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('analyzePhotoBtn').addEventListener('click', async function() {
+            if(!base64Image) { alert("請先選照片"); return; }
+            await analyzeWithAI(null, base64Image, 'image');
+        });
+
+        async function analyzeWithAI(productName, inputData, mode) {
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                stopLoading();
+                showError("⚠️ 肚子餓了，請餵食 API Key！");
+                return;
+            }
+
+            if (mode === 'image') startLoading("正在用力看圖片...");
+            else startLoading("正在快速閱讀成分...");
+
+            try {
+                let contents = [];
+                const promptText = mode === 'text' 
+                    ? `你是可愛風格的食安小萌獸。產品：${productName}。成分：${inputData}。請回傳純 JSON：{ "productName": "${productName}", "verdict": { "title": "可愛風短評", "color": "red|yellow|green" }, "highlights": [{"type":"good|bad","label":"","value":"","desc":""}], "translations": [{"origin":"","simplified":"","explain":""}], "advice": "建議" }`
+                    : `你是可愛風格的食安小萌獸。分析這張圖片。請回傳純 JSON：{ "productName": "推測名稱", "verdict": { "title": "可愛風短評", "color": "red|yellow|green" }, "highlights": [{"type":"good|bad","label":"","value":"","desc":""}], "translations": [{"origin":"","simplified":"","explain":""}], "advice": "建議" }`;
+
+                const parts = [{ text: promptText }];
+                if (mode === 'image') parts.push({ inline_data: { mime_type: photoFileType, data: inputData } });
+                contents.push({ parts: parts });
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: contents })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                if (!data.candidates || !data.candidates[0].content) throw new Error("AI 睡著了沒有回應 zZZ");
+
+                const result = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+                renderResult(result);
+
+            } catch (error) {
+                console.error(error);
+                let msg = error.message;
+                if(msg.includes("429")) msg = "額度吃光光了 (Quota Exceeded)";
+                if(msg.includes("not found")) msg = `找不到模型 (${MODEL_NAME})`;
+                showError(`嗚嗚失敗了：${msg}`);
+            } finally {
+                stopLoading();
+            }
+        }
+
+        function renderResult(data) {
+            resultArea.classList.remove('hidden');
+            msgArea.classList.add('hidden');
+            
+            document.getElementById('resProductName').textContent = data.productName || "神秘商品";
+            document.getElementById('resTitle').textContent = `「${data.verdict.title}」`;
+            document.getElementById('resAdvice').textContent = (typeof data.advice === 'string') ? data.advice : data.advice.action;
+
+            const card = document.getElementById('verdictCard');
+            const badge = document.getElementById('resHealthBadge');
+            const color = data.verdict.color;
+
+            // 處理燈號 (這裡的顏色邏輯保留，但樣式變可愛)
+            card.className = "bg-white p-6 rounded-[2rem] shadow-md border-b-8 relative overflow-hidden transform hover:scale-[1.02] transition-transform duration-300";
+            
+            if (color === 'red') {
+                card.classList.add('border-red-300'); 
+                badge.className = "shrink-0 px-4 py-1.5 text-xs font-bold rounded-full text-white bg-red-400";
+                badge.textContent = "🛑 少吃一點";
+            } else if (color === 'yellow') {
+                card.classList.add('border-yellow-300'); 
+                badge.className = "shrink-0 px-4 py-1.5 text-xs font-bold rounded-full text-white bg-yellow-400";
+                badge.textContent = "⚠️ 注意份量";
+            } else {
+                card.classList.add('border-green-300'); 
+                badge.className = "shrink-0 px-4 py-1.5 text-xs font-bold rounded-full text-white bg-emerald-400";
+                badge.textContent = "✅ 健康寶寶";
+            }
+
+            // Highlights
+            const hlContainer = document.getElementById('resHighlights');
+            hlContainer.innerHTML = '';
+            (data.highlights || []).forEach(item => {
+                const isGood = item.type === 'good';
+                hlContainer.innerHTML += `
+                    <div class="flex items-center gap-3 p-4 rounded-2xl border-2 ${isGood?'bg-emerald-50 border-emerald-100':'bg-red-50 border-red-100'}">
+                        <div class="text-2xl">${isGood?'🌸':'💥'}</div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-slate-700 text-sm">${item.label}</span>
+                                <span class="text-xs bg-white px-3 py-1 rounded-full font-bold text-slate-500 shadow-sm">${item.value}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 font-medium">${item.desc}</p>
+                        </div>
+                    </div>`;
+            });
+
+            // Translations
+            const transContainer = document.getElementById('resTranslations');
+            transContainer.innerHTML = '';
+            if(data.translations && data.translations.length) {
+                data.translations.forEach(t => {
+                    transContainer.innerHTML += `
+                        <div class="pt-4 first:pt-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs text-slate-400 line-through">${t.origin}</span>
+                                <span class="text-sm font-bold text-cute-pink">➜ ${t.simplified}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 font-medium bg-slate-50 p-2 rounded-xl inline-block w-full">
+                                💡 ${t.explain}
+                            </p>
+                        </div>`;
+                });
+            } else {
+                transContainer.innerHTML = "<p class='text-xs text-slate-400 text-center py-2'>這東西很單純，沒有奇怪的魔法成分！✨</p>";
+            }
+        }
+
+        function showError(msg, allowSwitch = false) {
+            msgArea.classList.remove('hidden');
+            msgText.textContent = msg;
+            if (allowSwitch) { switchToPhotoBtn.classList.remove('hidden'); switchToPhotoBtn.onclick = () => switchMode('photo'); } 
+            else { switchToPhotoBtn.classList.add('hidden'); }
+        }
+
+        function resetApp() {
+            resultArea.classList.add('hidden');
+            msgArea.classList.add('hidden');
+            if(currentMode === 'barcode') document.getElementById('scannerPlaceholder').classList.remove('hidden');
+            else { document.getElementById('imageInput').value = ""; document.getElementById('previewContainer').classList.add('hidden'); }
+        }
+
+        function startLoading(msg) {
+            loadingOverlay.classList.remove('hidden');
+            document.getElementById('loadingTip').textContent = msg || tips[0];
+            msgArea.classList.add('hidden');
+            resultArea.classList.add('hidden');
+        }
+        function stopLoading() { loadingOverlay.classList.add('hidden'); }
+    </script>
+</body>
+</html>
