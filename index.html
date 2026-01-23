@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriSnap AI (饗瘦)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fbfaf5;
+            --card-bg: #ffffff;
+            --primary: #8DA87E;
+            --primary-dark: #6e8562;
+            --accent: #E8C37E;
+            --text-main: #595757;
+            --text-light: #949494;
+            --danger: #d48282;
+            --shadow: 0 4px 12px rgba(163, 157, 142, 0.15);
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+
+        h1, h2, h3 { font-weight: 500; margin-top: 0; letter-spacing: 0.05em; }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 30px; font-size: 1.8rem; }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background: #fafafa;
+            font-size: 1rem;
+            color: var(--text-main);
+            box-sizing: border-box;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(141, 168, 126, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 50px;
+            background: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(141, 168, 126, 0.3);
+        }
+
+        button:disabled {
+            background: #dcdcdc;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        button.outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        button.outline:hover {
+            background: rgba(141, 168, 126, 0.1);
+        }
+
+        button.danger {
+            background: var(--danger);
+            width: auto;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 5px rgba(212, 130, 130, 0.3);
+        }
+
+        button.danger:hover {
+            background: #c23232;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: #fdfdfd;
+            border: 1px solid #f0f0f0;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
+        .stat-label { font-size: 0.8rem; color: var(--text-light); }
+
+        .progress-wrapper { margin-top: 20px; }
+        .progress-track {
+            background: #eee;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.8s ease-out;
+        }
+
+        .log-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+        }
+
+        .log-item:last-child { border-bottom: none; }
+
+        .log-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #eee;
+            flex-shrink: 0;
+        }
+
+        .log-content { flex: 1; padding-right: 70px; /* 留空間給刪除按鈕 */ }
+        .log-title { font-weight: bold; margin-bottom: 4px; }
+        .log-meta { font-size: 0.8rem; color: var(--text-light); display: flex; gap: 8px; flex-wrap: wrap; }
+        .tag { background: #f0f4ef; color: var(--primary-dark); padding: 2px 6px; border-radius: 4px; }
+
+        .log-delete {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            cursor: pointer;
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(89, 87, 87, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal-box {
+            background: white; width: 90%; max-width: 400px;
+            padding: 30px; border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #preview { width: 100%; border-radius: 12px; margin-top: 15px; display: none; }
+
+        .hidden { display: none !important; }
+
+        .fab {
+            position: fixed; bottom: 90px; right: 30px;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(141, 168, 126, 0.5);
+            cursor: pointer;
+            z-index: 100;
+            transition: transform 0.3s;
+        }
+
+        .fab:hover { transform: scale(1.1); }
+
+        .error-box {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+
+        /* 分頁標籤 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1rem;
+            color: var(--text-light);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            width: auto;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .text-action {
+            background: #f0f4ef; color: var(--primary-dark); width: auto; padding: 8px 16px; font-size: 0.9rem; border: none;
+        }
+        .text-action:hover {
+            background: #e0e8de;
+        }
+
+        /* --- 歷史表格樣式 --- */
+        .table-container {
+            overflow-x: auto; /* 支援手機橫向滑動 */
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.85rem;
+            min-width: 600px; /* 確保表格不會太窄 */
+        }
+
+        .history-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .history-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: center;
+            color: var(--text-main);
+        }
+
+        .history-table .summary-row {
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .history-table .summary-row:hover {
+            background-color: #f7f9f7;
+        }
+
+        /* 詳細內容列 */
+        .detail-row {
+            display: none;
+            background-color: #fafbf9;
+        }
+
+        .detail-row.open {
+            display: table-row;
+        }
+
+        .detail-content {
+            padding: 15px 20px;
+            text-align: left;
+        }
+
+        .detail-meal-item {
+            display: flex;
+            flex-direction: column; /* 改為垂直排列以便顯示營養素 */
+            padding: 8px 0;
+            border-bottom: 1px dashed #e0e0e0;
+            font-size: 0.9rem;
+        }
+        
+        .detail-meal-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-meal-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .detail-meal-nutrients {
+            font-size: 0.8rem;
+            color: #888;
+            display: flex;
+            gap: 12px;
+        }
+
+        .detail-advice {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🍃 NutriSnap (饗瘦)</h1>
+
+    <div id="setupSection" class="card hidden">
+        <h2 id="setupTitle" style="text-align: center; margin-bottom: 20px;">開始您的健康旅程</h2>
+        <p style="text-align: center; color: var(--text-light); margin-bottom: 30px;">請輸入基本資料以計算代謝率</p>
+        
+        <div style="display: flex; gap: 15px;">
+            <div style="flex:1">
+                <label>性別</label>
+                <select id="gender">
+                    <option value="male">男性</option>
+                    <option value="female">女性</option>
+                </select>
+            </div>
+            <div style="flex:1">
+                <label>年齡</label>
+                <input type="number" id="age" placeholder="例如: 25">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <div style="flex:1">
+                <label>身高 (cm)</label>
+                <input type="number" id="height" placeholder="170">
+            </div>
+            <div style="flex:1">
+                <label>體重 (kg)</label>
+                <input type="number" id="weight" placeholder="60">
+            </div>
+        </div>
+
+        <label>每週運動習慣</label>
+        <select id="activity">
+            <option value="1.2">久坐 (幾乎不運動)</option>
+            <option value="1.375">輕度 (每週 1-3 天)</option>
+            <option value="1.55">中度 (每週 3-5 天)</option>
+            <option value="1.725">高度 (每週 6-7 天)</option>
+        </select>
+
+        <label>飲控目標</label>
+        <select id="goal">
+            <option value="carefree">沒在管 (快樂吃)</option>
+            <option value="maintain">不變胖 (維持現狀)</option>
+            <option value="diet">減脂增肌 (嚴格控制)</option>
+        </select>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button id="setupSubmitBtn" onclick="saveProfileAndStart()">開始紀錄 ➔</button>
+            <button id="setupCancelBtn" onclick="cancelEdit()" class="outline hidden">取消</button>
+        </div>
+        
+        <p style="text-align: center; margin-top: 20px; font-size: 0.8rem;">
+            <a href="#" onclick="hardReset(); return false;" style="color: #bbb; text-decoration: none;">⚠️ 刪除所有資料重來</a>
+        </p>
+    </div>
+
+    <div id="dashboardSection" class="hidden">
+        <!-- 分頁標籤 -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('today')">🍽️ 今日</button>
+            <button class="tab-btn" onclick="switchTab('history')">📊 歷史表格</button>
+        </div>
+
+        <!-- 今日分頁 -->
+        <div id="today" class="tab-content active">
+            <div class="card" style="background: linear-gradient(135deg, #8DA87E 0%, #7E9F82 100%); color: white;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="margin-bottom: 5px; color: white;">今日目標</h3>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">TDEE: <span id="displayTdee">0</span> kcal</div>
+                        <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 2px;">模式：<span id="displayGoal">--</span></div>
+                    </div>
+                    <button onclick="editProfile()" style="width: auto; padding: 6px 15px; font-size: 0.8rem; background: rgba(255,255,255,0.2);">⚙️ 更新資料</button>
+                </div>
+                
+                <div class="progress-wrapper">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                        <span id="progressText">0 / 0</span>
+                        <span id="percentText">0%</span>
+                    </div>
+                    <div class="progress-track" style="background: rgba(255,255,255,0.3);">
+                        <div id="progressBar" class="progress-fill" style="background: white;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="valProtein">0g</div>
+                    <div class="stat-label">蛋白質</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="valFat">0g</div>
+                    <div class="stat-label">脂肪</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="valCarbs">0g</div>
+                    <div class="stat-label">碳水</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="logCount">0</div>
+                    <div class="stat-label">紀錄餐數</div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">
+                <h3>今日餐點</h3>
+                <button onclick="openManualInput()" class="text-action">📝 手動輸入</button>
+            </div>
+
+            <div id="logList" class="card" style="min-height: 100px;">
+                <p style="text-align: center; color: #ccc; padding: 20px;">還沒有紀錄喔，拍張照或手動紀錄吧！</p>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button onclick="getDailyAdvice()" class="outline">💬 取得飲食建議 (可隨時更新)</button>
+                <div id="aiAdviceBox" class="card hidden" style="background: #E8F5E9; margin-top: 15px; font-size: 0.95rem;"></div>
+            </div>
+        </div>
+
+        <!-- 歷史分頁 -->
+        <div id="history" class="tab-content">
+            <div id="historyContainer" class="table-container">
+                <p style="text-align: center; color: #ccc; padding: 20px;">載入中...</p>
+            </div>
+            <p style="text-align: center; color: #999; font-size: 0.8rem;">💡 點擊日期可查看詳細餐點與建議</p>
+        </div>
+    </div>
+
+</div>
+
+<div id="fabBtn" class="fab hidden" onclick="triggerUpload()">📷</div>
+<input type="file" id="imageInput" accept="image/*" class="hidden" capture="environment">
+
+<!-- API Key Modal -->
+<div id="apiModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="color: var(--primary);">啟動 AI 分析</h3>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">
+            請輸入 Google Gemini API Key 以開始分析。<br>Key 僅暫存於記憶體，重整後需重新輸入。
+        </p>
+        <input type="password" id="apiKeyInput" placeholder="請輸入 Gemini API Key">
+        <button onclick="confirmKey()">確認並開始</button>
+        <button onclick="closeModal()" class="outline" style="margin-top: 10px; border: none; color: #999;">取消</button>
+    </div>
+</div>
+
+<div id="previewModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 500px;">
+        <h3>確認這張照片？</h3>
+        <img id="preview" alt="Preview">
+        <div id="loading" style="text-align: center; color: var(--primary); font-weight: 500; display: none; margin-top: 15px;">
+            ✨ AI 正在分析營養成分...<br>
+            <small style="color: #999;">(約需 3-5 秒)</small>
+        </div>
+        <div id="previewError" class="error-box hidden"></div>
+        <div id="previewActions" style="margin-top: 20px;">
+            <button onclick="analyzeImage()">開始分析</button>
+            <button onclick="closePreview()" class="outline" style="margin-top: 10px; border: none;">重拍</button>
+        </div>
+    </div>
+</div>
+
+<div id="manualModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="color: var(--primary);">📝 手動紀錄餐點</h3>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+            請描述您吃的食物與份量，AI 將為您估算。
+        </p>
+        <textarea id="manualTextInput" rows="4" placeholder="例如：一碗紅燒牛肉麵、一份燙青菜、一杯無糖豆漿..."></textarea>
+        
+        <div id="manualLoading" style="text-align: center; color: var(--primary); font-weight: 500; display: none; margin-bottom: 15px;">
+            ✨ AI 正在估算文字內容...
+        </div>
+
+        <button onclick="submitManualText()" id="manualSubmitBtn">開始估算</button>
+        <button onclick="closeManualModal()" class="outline" style="margin-top: 10px; border: none; color: #999;">取消</button>
+    </div>
+</div>
+
+<script>
+    let db;
+    let globalApiKey = null; 
+    let currentUser = null;
+    let currentImageBase64 = null;
+    let rawBase64Data = null;
+    let currentMimeType = "image/jpeg";
+    let pendingAction = null; // 'image', 'text', 'advice'
+
+    const GOAL_MAP = {
+        'carefree': '快樂吃',
+        'maintain': '維持體重',
+        'diet': '減脂增肌'
+    };
+
+    window.onload = async () => {
+        await initDB();
+        checkProfileStatus();
+    };
+
+    function checkProfileStatus() {
+        const savedProfile = localStorage.getItem('nutrisnap_profile');
+        if (savedProfile) {
+            currentUser = JSON.parse(savedProfile);
+            if (!currentUser.goal) currentUser.goal = 'maintain';
+            showDashboard();
+        } else {
+            document.getElementById('setupSection').classList.remove('hidden');
+        }
+    }
+
+    function saveProfileAndStart() {
+        const age = document.getElementById('age').value;
+        const gender = document.getElementById('gender').value;
+        const height = document.getElementById('height').value;
+        const weight = document.getElementById('weight').value;
+        const activity = document.getElementById('activity').value;
+        const goal = document.getElementById('goal').value;
+
+        if(!age || !height || !weight) { alert("請填寫完整資料"); return; }
+
+        let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+        bmr += (gender === 'male') ? 5 : -161;
+        const tdee = Math.round(bmr * activity);
+
+        currentUser = { age, gender, height, weight, activity, tdee, goal };
+        localStorage.setItem('nutrisnap_profile', JSON.stringify(currentUser));
+
+        document.getElementById('setupSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        showDashboard();
+    }
+
+    // --- Profile Editing Functions ---
+    function editProfile() {
+        if (!currentUser) return;
+        
+        // Populate inputs
+        document.getElementById('gender').value = currentUser.gender;
+        document.getElementById('age').value = currentUser.age;
+        document.getElementById('height').value = currentUser.height;
+        document.getElementById('weight').value = currentUser.weight;
+        document.getElementById('activity').value = currentUser.activity;
+        document.getElementById('goal').value = currentUser.goal;
+
+        // Change UI text
+        document.getElementById('setupTitle').innerText = "更新個人資料";
+        document.getElementById('setupSubmitBtn').innerText = "儲存變更";
+        document.getElementById('setupCancelBtn').classList.remove('hidden');
+
+        // Show section
+        document.getElementById('dashboardSection').classList.add('hidden');
+        document.getElementById('setupSection').classList.remove('hidden');
+    }
+
+    function cancelEdit() {
+        // Reset UI text back to default (optional, but good practice)
+        document.getElementById('setupTitle').innerText = "開始您的健康旅程";
+        document.getElementById('setupSubmitBtn').innerText = "開始紀錄 ➔";
+        document.getElementById('setupCancelBtn').classList.add('hidden');
+
+        document.getElementById('setupSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+    }
+
+    function hardReset() {
+        if(confirm('警告：這將會刪除所有本地設定與紀錄，且無法復原。確定要重來嗎？')) {
+            localStorage.removeItem('nutrisnap_profile');
+            // 清空 DB (Optional but recommended)
+            const req = indexedDB.deleteDatabase('NutriSnapDB');
+            req.onsuccess = () => location.reload();
+            req.onerror = () => location.reload();
+        }
+    }
+
+    function showDashboard() {
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        document.getElementById('fabBtn').classList.remove('hidden');
+        document.getElementById('displayTdee').innerText = currentUser.tdee;
+        document.getElementById('displayGoal').innerText = GOAL_MAP[currentUser.goal] || '維持';
+        renderLogs();
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+
+        if (tabName === 'history') {
+            renderHistory();
+        }
+    }
+
+    function triggerUpload() {
+        document.getElementById('imageInput').click();
+    }
+
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            currentMimeType = file.type || "image/jpeg";
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                currentImageBase64 = evt.target.result;
+                rawBase64Data = evt.target.result.split(',')[1];
+                const previewImg = document.getElementById('preview');
+                previewImg.src = currentImageBase64;
+                previewImg.style.display = 'block';
+                document.getElementById('previewError').classList.add('hidden');
+                
+                const analyzeBtn = document.querySelector('#previewActions button');
+                if (analyzeBtn) analyzeBtn.disabled = false;
+
+                document.getElementById('previewModal').classList.add('active');
+            };
+            reader.readAsDataURL(file);
+        }
+        this.value = '';
+    });
+
+    // --- API Key & Modal Control ---
+
+    function checkApiKey(action) {
+        if (!globalApiKey) {
+            pendingAction = action;
+            document.getElementById('apiModal').classList.add('active');
+            if (action === 'image') document.getElementById('previewModal').classList.remove('active');
+            if (action === 'text') document.getElementById('manualModal').classList.remove('active');
+            return false;
+        }
+        return true;
+    }
+
+    function confirmKey() {
+        const key = document.getElementById('apiKeyInput').value.trim();
+        if (key) {
+            globalApiKey = key;
+            document.getElementById('apiModal').classList.remove('active');
+            
+            if (pendingAction === 'image') {
+                document.getElementById('previewModal').classList.add('active');
+                runGeminiAnalysis();
+            } else if (pendingAction === 'text') {
+                document.getElementById('manualModal').classList.add('active');
+            } else if (pendingAction === 'advice') {
+                getDailyAdvice();
+            }
+            pendingAction = null;
+        } else {
+            alert("請輸入 API Key");
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('apiModal').classList.remove('active');
+        if (pendingAction === 'image') document.getElementById('previewModal').classList.add('active');
+        if (pendingAction === 'text') document.getElementById('manualModal').classList.add('active');
+        pendingAction = null;
+    }
+
+    // --- Manual Input ---
+
+    function openManualInput() {
+        document.getElementById('manualModal').classList.add('active');
+    }
+
+    function closeManualModal() {
+        document.getElementById('manualModal').classList.remove('active');
+        document.getElementById('manualTextInput').value = '';
+        document.getElementById('manualLoading').style.display = 'none';
+        document.getElementById('manualSubmitBtn').disabled = false;
+    }
+
+    function submitManualText() {
+        const text = document.getElementById('manualTextInput').value.trim();
+        if(!text) { alert("請輸入內容"); return; }
+        
+        if (checkApiKey('text')) {
+            runManualAnalysis(text);
+        }
+    }
+
+    // --- Image Analysis ---
+
+    function analyzeImage() {
+        if (checkApiKey('image')) {
+            runGeminiAnalysis();
+        }
+    }
+
+    function closePreview() {
+        document.getElementById('previewModal').classList.remove('active');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('previewActions').style.display = 'block';
+    }
+
+    // --- Real API Logic ---
+
+    async function callGeminiAPI(promptText, base64Image) {
+        const model = "gemini-flash-latest";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${globalApiKey}`;
+        
+        const parts = [{ text: promptText }];
+        if (base64Image) {
+            parts.push({ inline_data: { mime_type: currentMimeType, data: base64Image } });
+        }
+
+        const payload = {
+            contents: [{ parts: parts }],
+            generationConfig: { response_mime_type: "application/json" }
+        };
+
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.status === 503) {
+                    throw new Error("Model overloaded");
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    let msg = data.error.message;
+                    if (msg.includes("404")) msg = "找不到模型 (404)，請確認 API Key 是否有效。";
+                    if (msg.includes("overloaded")) throw new Error("Model overloaded");
+                    throw new Error(msg);
+                }
+                
+                if (!data.candidates || !data.candidates[0].content) throw new Error("無回傳內容");
+
+                let text = data.candidates[0].content.parts[0].text;
+                text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                
+                const firstBrace = text.indexOf('{');
+                const lastBrace = text.lastIndexOf('}');
+                
+                if (firstBrace !== -1 && lastBrace !== -1) {
+                    text = text.substring(firstBrace, lastBrace + 1);
+                }
+                
+                return JSON.parse(text);
+
+            } catch (error) {
+                if (error.message.includes("overloaded") && retryCount < maxRetries - 1) {
+                    retryCount++;
+                    console.warn(`Model overloaded, retrying... (${retryCount}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); 
+                    continue;
+                }
+                throw error;
+            }
+        }
+    }
+
+    async function runGeminiAnalysis() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('previewActions').style.display = 'none';
+        
+        const analyzeBtn = document.querySelector('#previewActions button');
+        if (analyzeBtn) analyzeBtn.disabled = true;
+
+        const prompt = `你是一個專業營養師。請分析這張圖片的食物。
+        重點：
+        1. 盡可能辨識食物名稱。
+        2. 如果看不清楚，請根據顏色和形狀進行合理猜測。
+        3. 請"嚴格"依照此 JSON 格式回傳，不要有 Markdown：
+        { "name": "食物名稱(繁體中文)", "calories": 數字(大卡), "protein": 數字(克), "fat": 數字(克), "carbs": 數字(克) }
+        4. 如果真的完全無法辨識，name 才回傳 "無法辨識"。`;
+
+        try {
+            const result = await callGeminiAPI(prompt, rawBase64Data);
+
+            if (result.name === "無法辨識") {
+                if(confirm("AI 表示圖片難以辨識。您想改用文字輸入嗎？")) {
+                    closePreview();
+                    openManualInput();
+                } else {
+                    closePreview();
+                }
+                return;
+            }
+
+            await saveLog(result, currentImageBase64);
+            closePreview();
+
+        } catch (error) {
+            console.error(error);
+            alert("分析失敗：" + error.message);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('previewActions').style.display = 'block';
+            if (analyzeBtn) analyzeBtn.disabled = false;
+        }
+    }
+
+    async function runManualAnalysis(text) {
+        document.getElementById('manualLoading').style.display = 'block';
+        document.getElementById('manualSubmitBtn').disabled = true;
+
+        const prompt = `你是一個營養師。請估算以下食物的營養成分："${text}"。
+        重點：
+        1. 如果使用者未提供份量（例如只輸入"牛肉麵"），請假設為「一般餐廳的一人份標準份量」。
+        2. 數據請盡量客觀，不要過度高估或低估。
+        3. 請嚴格依照此 JSON 格式回傳，不要有 Markdown：
+        { "name": "食物名稱(含份量估算說明)", "calories": 數字(大卡), "protein": 數字(克), "fat": 數字(克), "carbs": 數字(克) }`;
+
+        try {
+            const result = await callGeminiAPI(prompt, null);
+            const textImage = generateTextImage(result.name);
+            await saveLog(result, textImage);
+            
+            closeManualModal();
+            alert(`已紀錄：${result.name}`);
+
+        } catch (error) {
+            console.error(error);
+            alert("估算失敗：" + error.message);
+            document.getElementById('manualLoading').style.display = 'none';
+            document.getElementById('manualSubmitBtn').disabled = false;
+        }
+    }
+
+    function generateTextImage(text) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 100;
+        canvas.height = 100;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#f0f4ef';
+        ctx.fillRect(0, 0, 100, 100);
+        ctx.fillStyle = '#6e8562';
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📝', 50, 50);
+        return canvas.toDataURL();
+    }
+
+    // --- Database & Rendering ---
+
+    async function saveLog(data, imgData) {
+        const logData = {
+            date: new Date().toISOString().split('T')[0],
+            timestamp: new Date().getTime(),
+            foodName: data.name,
+            calories: Math.round(data.calories),
+            protein: Math.round(data.protein),
+            fat: Math.round(data.fat),
+            carbs: Math.round(data.carbs),
+            image: imgData
+        };
+        await addLogToDB(logData);
+        renderLogs();
+    }
+
+    async function deleteLog(id) {
+        if (confirm('確定要刪除這筆紀錄嗎？')) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(['logs'], 'readwrite');
+                const store = tx.objectStore('logs');
+                const request = store.delete(id);
+                
+                request.onsuccess = () => {
+                    renderLogs();
+                    resolve();
+                };
+                
+                request.onerror = (e) => {
+                    console.error("Delete failed:", e);
+                    alert("刪除失敗");
+                };
+            });
+        }
+    }
+
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('NutriSnapDB', 1);
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains('logs')) {
+                    const store = db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
+                    store.createIndex('date', 'date', { unique: false });
+                }
+                if (!db.objectStoreNames.contains('advice')) {
+                    db.createObjectStore('advice', { keyPath: 'date', unique: true });
+                }
+            };
+            request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+            request.onerror = (e) => reject(e);
+        });
+    }
+
+    function addLogToDB(data) {
+        return new Promise((resolve) => {
+            const tx = db.transaction(['logs'], 'readwrite');
+            tx.objectStore('logs').add(data);
+            tx.oncomplete = () => resolve();
+        });
+    }
+
+    async function getTodayLogs() {
+        return new Promise((resolve) => {
+            const today = new Date().toISOString().split('T')[0];
+            const tx = db.transaction(['logs'], 'readonly');
+            const store = tx.objectStore('logs');
+            const index = store.index('date');
+            const request = index.getAll(IDBKeyRange.only(today));
+            request.onsuccess = () => resolve(request.result);
+        });
+    }
+
+    async function getAllLogs() {
+        return new Promise((resolve) => {
+            const tx = db.transaction(['logs'], 'readonly');
+            const store = tx.objectStore('logs');
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+        });
+    }
+
+    async function renderLogs() {
+        const logs = await getTodayLogs();
+        const list = document.getElementById('logList');
+        let total = { c: 0, p: 0, f: 0, car: 0 };
+
+        if (logs.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: #ccc; padding: 20px;">尚無紀錄，拍張照或手動紀錄吧！</p>';
+        } else {
+            list.innerHTML = '';
+            logs.reverse().forEach(log => {
+                total.c += log.calories;
+                total.p += log.protein;
+                total.f += log.fat;
+                total.car += log.carbs;
+
+                const div = document.createElement('div');
+                div.className = 'log-item';
+                
+                div.innerHTML = `
+                    <img src="${log.image}" class="log-img" alt="food">
+                    <div class="log-content">
+                        <div class="log-title">${log.foodName}</div>
+                        <div class="log-meta">
+                            <span class="tag">🔥 ${log.calories}</span>
+                            <span>P:${log.protein}g F:${log.fat}g C:${log.carbs}g</span>
+                        </div>
+                    </div>
+                    <button class="danger log-delete">刪除</button>
+                `;
+                
+                const deleteBtn = div.querySelector('.log-delete');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteLog(log.id);
+                });
+
+                list.appendChild(div);
+            });
+        }
+
+        document.getElementById('valProtein').innerText = total.p + 'g';
+        document.getElementById('valFat').innerText = total.f + 'g';
+        document.getElementById('valCarbs').innerText = total.car + 'g';
+        document.getElementById('logCount').innerText = logs.length;
+
+        const percent = Math.min((total.c / currentUser.tdee) * 100, 100);
+        document.getElementById('progressText').innerText = total.c + ' / ' + currentUser.tdee + ' kcal';
+        document.getElementById('percentText').innerText = Math.round(percent) + '%';
+        document.getElementById('progressBar').style.width = percent + '%';
+        
+        if(percent > 100) document.getElementById('progressBar').style.background = 'var(--danger)';
+        else document.getElementById('progressBar').style.background = 'white';
+    }
+
+    async function getDailyAdvice() {
+        if (!checkApiKey('advice')) return;
+
+        const logs = await getTodayLogs();
+        if (logs.length === 0) { alert("請先記錄一些食物"); return; }
+        
+        const adviceBox = document.getElementById('aiAdviceBox');
+        adviceBox.classList.remove('hidden');
+        adviceBox.innerHTML = "🤔 AI 分析中...";
+
+        let totalC = 0;
+        let totalP = 0;
+        let totalF = 0;
+        let totalCarbs = 0;
+        
+        logs.forEach(l => {
+            totalC += l.calories;
+            totalP += l.protein;
+            totalF += l.fat;
+            totalCarbs += l.carbs;
+        });
+
+        const goal = currentUser.goal || 'maintain';
+        let systemInstruction = "你是專業營養師。";
+        if (goal === 'carefree') systemInstruction += "用戶目標是快樂吃，請給予輕鬆、鼓勵的語氣，不要太在意熱量。";
+        if (goal === 'maintain') systemInstruction += "用戶目標是維持體重，請給予溫和、平衡的建議。";
+        if (goal === 'diet') systemInstruction += "用戶目標是減脂增肌。若熱量超標，請用稍微毒舌、嚴厲的語氣警惕用戶；若表現好則給予肯定。";
+
+        const prompt = `${systemInstruction} 用戶 TDEE 為 ${currentUser.tdee}。今日攝取：熱量 ${totalC}, 蛋白質 ${totalP}, 脂肪 ${totalF}, 碳水 ${totalCarbs}。剩餘熱量 ${currentUser.tdee - totalC}。請給予簡短建議 (100字內)。`;
+
+        try {
+            const model = "gemini-flash-latest"; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${globalApiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+            
+            const advice = data.candidates[0].content.parts[0].text;
+            adviceBox.innerHTML = '💡 ' + advice;
+
+            const today = new Date().toISOString().split('T')[0];
+            const adviceData = {
+                date: today,
+                advice: advice,
+                totalCalories: totalC,
+                totalProtein: totalP,
+                totalFat: totalF,
+                totalCarbs: totalCarbs
+            };
+
+            const tx = db.transaction(['advice'], 'readwrite');
+            tx.objectStore('advice').put(adviceData);
+
+        } catch (e) {
+            adviceBox.innerHTML = "無法取得建議: " + e.message;
+        }
+    }
+
+    async function renderHistory() {
+        const allLogs = await getAllLogs();
+        const historyContainer = document.getElementById('historyContainer');
+
+        if (allLogs.length === 0) {
+            historyContainer.innerHTML = '<p style="text-align: center; color: #ccc; padding: 20px;">暫無歷史紀錄。</p>';
+            return;
+        }
+
+        const groupedByDate = {};
+        allLogs.forEach(log => {
+            if (!groupedByDate[log.date]) {
+                groupedByDate[log.date] = [];
+            }
+            groupedByDate[log.date].push(log);
+        });
+
+        const sortedDates = Object.keys(groupedByDate).sort().reverse();
+
+        let tableHtml = `
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>熱量</th>
+                        <th>蛋白質</th>
+                        <th>脂肪</th>
+                        <th>碳水</th>
+                        <th>詳情</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        for (const date of sortedDates) {
+            const dayLogs = groupedByDate[date];
+            let dayTotal = { c: 0, p: 0, f: 0, car: 0 };
+            dayLogs.forEach(log => {
+                dayTotal.c += log.calories;
+                dayTotal.p += log.protein;
+                dayTotal.f += log.fat;
+                dayTotal.car += log.carbs;
+            });
+
+            const advice = await getAdviceForDate(date);
+            const dateStr = date.substring(5).replace('-', '/');
+
+            tableHtml += `
+                <tr class="summary-row" onclick="toggleDetail('detail-${date}')">
+                    <td>${dateStr}</td>
+                    <td>${dayTotal.c}</td>
+                    <td>${dayTotal.p}</td>
+                    <td>${dayTotal.f}</td>
+                    <td>${dayTotal.car}</td>
+                    <td>🔽</td>
+                </tr>
+                <tr id="detail-${date}" class="detail-row">
+                    <td colspan="6">
+                        <div class="detail-content">
+                            ${dayLogs.map(log => `
+                                <div class="detail-meal-item">
+                                    <div class="detail-meal-header">
+                                        <span>${log.foodName}</span>
+                                        <span>${log.calories} kcal</span>
+                                    </div>
+                                    <div class="detail-meal-nutrients">
+                                        <span>蛋白質: ${log.protein}g</span>
+                                        <span>脂肪: ${log.fat}g</span>
+                                        <span>碳水: ${log.carbs}g</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${advice ? `<div class="detail-advice">💡 ${advice.advice}</div>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        tableHtml += `</tbody></table>`;
+        historyContainer.innerHTML = tableHtml;
+    }
+
+    function toggleDetail(id) {
+        const row = document.getElementById(id);
+        if (row.classList.contains('open')) {
+            row.classList.remove('open');
+        } else {
+            row.classList.add('open');
+        }
+    }
+
+    function getAdviceForDate(date) {
+        return new Promise((resolve) => {
+            const tx = db.transaction(['advice'], 'readonly');
+            const store = tx.objectStore('advice');
+            const request = store.get(date);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => resolve(null);
+        });
+    }
+
+</script>
+</body>
+</html>
